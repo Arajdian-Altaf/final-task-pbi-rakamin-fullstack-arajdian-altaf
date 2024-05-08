@@ -6,5 +6,5 @@ type User struct {
 	gorm.Model
 	Username string
 	Email    string `gorm:"unique"`
-	password string `gorm:"min:6"`
+	Password string `gorm:"min:6"`
 }
