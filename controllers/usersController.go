@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"log"
+	"net/http"
+
+	"github.com/Arajdian-Altaf/final-task-pbi/helpers"
 	"github.com/Arajdian-Altaf/final-task-pbi/models"
 	valid "github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 func UserCreate(c *gin.Context) {
@@ -26,7 +29,17 @@ func UserCreate(c *gin.Context) {
 		return
 	}
 
-	user := models.User{Username: userBody.Username, Email: userBody.Email, Password: userBody.Password}
+	hashedPassword, err := helpers.HashPassword(userBody.Password)
+
+	if err != nil {
+		log.Fatal(err)
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	user := models.User{Username: userBody.Username, Email: userBody.Email, Password: hashedPassword}
 
 	result := DB.Create(&user)
 
