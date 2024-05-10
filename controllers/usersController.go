@@ -3,11 +3,13 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/Arajdian-Altaf/final-task-pbi/helpers"
 	"github.com/Arajdian-Altaf/final-task-pbi/models"
 	valid "github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
 )
 
@@ -177,4 +179,40 @@ func UserUpdate(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"user": user,
 	})
+}
+
+func UserDelete(c *gin.Context) {
+	userClaims := c.MustGet("userClaims").(*helpers.UserClaims)
+	DB := c.MustGet("db").(*gorm.DB)
+
+	// Get id from URL
+	id := c.Param("userId")
+
+	var user models.User
+	result := DB.First(&user, id)
+
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	if user.ID != userClaims.ID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Cannot delete other user",
+		})
+		return
+	}
+
+	result = DB.Delete(&user)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
