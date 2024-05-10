@@ -123,8 +123,15 @@ func UserUpdate(c *gin.Context) {
 		Password string `valid:"minstringlength(6)"`
 	}
 
-	c.Bind(&userBody)
+	err := c.BindJSON(&userBody)
 
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Empty body",
+		})
+		return
+	}
+	
 	if _, err := valid.ValidateStruct(userBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -132,10 +139,39 @@ func UserUpdate(c *gin.Context) {
 		return
 	}
 
+	// Get id from URL
+	id := c.Param("userId")
+
+	var user models.User
+	result := DB.First(&user, id)
+
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	if user.ID != userClaims.ID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Cannot update other user",
+		})
+		return
+	}
+
+	hashedPassword, err := helpers.HashPassword(userBody.Password)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	DB.Model(&user).Updates(models.User{
 		Username: userBody.Username,
-		Email: userBody.Email,
-		Password: userBody.Password,
+		Email:    userBody.Email,
+		Password: hashedPassword,
 	})
 
 	c.JSON(200, gin.H{
