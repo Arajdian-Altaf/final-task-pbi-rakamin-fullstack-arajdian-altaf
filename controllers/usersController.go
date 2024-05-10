@@ -55,14 +55,67 @@ func UserCreate(c *gin.Context) {
 	})
 }
 
-func UserUpdate(c *gin.Context) {
+func UserLogin(c *gin.Context) {
 	DB := c.MustGet("db").(*gorm.DB)
 
-	// Get id from URL
-	id := c.Param("id")
+	var loginRequest struct {
+		Email    string `valid:"email"`
+		Password string `valid:"minstringlength(6)"`
+	}
+
+	loginRequest.Email = c.Query("email")
+	loginRequest.Password = c.Query("password")
+
+	if _, err := valid.ValidateStruct(loginRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
 	var user models.User
-	DB.First(&user, id)
+
+	result := DB.First(&user, "email = ?", loginRequest.Email)
+
+	if result.Error != nil {
+		c.JSON(400, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	if !helpers.CheckPassword(loginRequest.Password, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Wrong password",
+		})
+		return
+	}
+
+	userClaim := helpers.UserClaims{
+		ID:             user.ID,
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt: time.Now().Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+		},
+	}
+
+	accessToken, err := helpers.GenerateToken(userClaim)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"token": accessToken,
+	})
+}
+
+func UserUpdate(c *gin.Context) {
+	DB := c.MustGet("db").(*gorm.DB)
+	userClaims := c.MustGet("userClaims").(*helpers.UserClaims)
 
 	var userBody struct {
 		Username string
