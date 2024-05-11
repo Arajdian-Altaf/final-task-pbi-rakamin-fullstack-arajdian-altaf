@@ -108,7 +108,7 @@ func PhotoUpdate(c *gin.Context) {
 		return
 	}
 
-	DB.Model(&photo).Updates(models.Photo{
+	result = DB.Model(&photo).Updates(models.Photo{
 		Title: photoBody.Title,
 		Caption: photoBody.Caption,
 		PhotoURL: photoBody.PhotoURL,
@@ -116,6 +116,43 @@ func PhotoUpdate(c *gin.Context) {
 
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func PhotoDelete(c *gin.Context) {
+	DB := c.MustGet("db").(*gorm.DB)
+	userClaims := c.MustGet("userClaims").(*helpers.UserClaims)
+
+	photoId := c.Param("photoId")
+
+	var photo models.Photo
+	result := DB.First(&photo, photoId)
+
+	// Check if the photo exists
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Photo not found",
+		})
+		return
+	}
+
+	// Check if the photo belongs to the user
+	if photo.UserID != userClaims.ID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Cannot delete other user's photo",
+		})
+		return
+	}
+
+	result = DB.Delete(&photo)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": result.Error.Error(),
 		})
 		return
