@@ -11,7 +11,7 @@ func PhotoRoutes(route *gin.Engine) {
 	{
 		photo.POST("/", middlewares.JWTMiddleware(), controllers.PhotoCreate)
 		photo.GET("/", func(c *gin.Context) {})
-		photo.PUT("/:photoId", func(c *gin.Context) {})
+		photo.PUT("/:photoId", middlewares.JWTMiddleware(), controllers.PhotoUpdate)
 		photo.DELETE("/:photoId", func(c *gin.Context) {})
 	}
 }
