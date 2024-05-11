@@ -10,6 +10,34 @@ import (
 	"gorm.io/gorm"
 )
 
+func PhotoGet(c *gin.Context) {
+	DB := c.MustGet("db").(*gorm.DB)
+	userClaims := c.MustGet("userClaims").(*helpers.UserClaims)
+
+	var user models.User
+	result := DB.First(&user, userClaims.ID)
+
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+
+	result = DB.Preload("Photos").Find(&user)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"photos": user.Photos,
+	})
+}
+
 func PhotoCreate(c *gin.Context) {
 	DB := c.MustGet("db").(*gorm.DB)
 	userClaims := c.MustGet("userClaims").(*helpers.UserClaims)

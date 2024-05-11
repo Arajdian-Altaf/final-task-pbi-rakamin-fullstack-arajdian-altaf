@@ -9,8 +9,8 @@ import (
 func PhotoRoutes(route *gin.Engine) {
 	photo := route.Group("/photos")
 	{
+		photo.GET("/", middlewares.JWTMiddleware(), controllers.PhotoGet)
 		photo.POST("/", middlewares.JWTMiddleware(), controllers.PhotoCreate)
-		photo.GET("/", func(c *gin.Context) {})
 		photo.PUT("/:photoId", middlewares.JWTMiddleware(), controllers.PhotoUpdate)
 		photo.DELETE("/:photoId", middlewares.JWTMiddleware(), controllers.PhotoDelete)
 	}
