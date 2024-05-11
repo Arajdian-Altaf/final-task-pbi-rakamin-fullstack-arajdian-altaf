@@ -72,8 +72,14 @@ func UserLogin(c *gin.Context) {
 		Password string `valid:"minstringlength(6)"`
 	}
 
-	loginRequest.Email = c.Query("email")
-	loginRequest.Password = c.Query("password")
+	err := c.BindJSON(&loginRequest)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Empty body",
+		})
+		return
+	}
 
 	if _, err := valid.ValidateStruct(loginRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
