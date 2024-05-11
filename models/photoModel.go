@@ -9,6 +9,5 @@ type Photo struct {
 	Title    string
 	Caption  string
 	PhotoURL string
-	UserID   uint `gorm:"index"`
-	User     User `gorm:"foreignKey:UserID"`
+	UserID   uint
 }
