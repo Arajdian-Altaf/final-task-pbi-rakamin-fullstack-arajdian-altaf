@@ -218,7 +218,7 @@ func UserDelete(c *gin.Context) {
 		return
 	}
 
-	result = DB.Delete(&user)
+	result = DB.Select("Photos").Delete(&user)
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
