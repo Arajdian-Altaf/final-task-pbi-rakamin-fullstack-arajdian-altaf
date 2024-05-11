@@ -17,12 +17,19 @@ func UserCreate(c *gin.Context) {
 	DB := c.MustGet("db").(*gorm.DB)
 
 	var userBody struct {
-		Username string
-		Email    string `valid:"email"`
-		Password string `valid:"minstringlength(6)"`
+		Username string `valid:"required,ascii"`
+		Email    string `valid:"required,email"`
+		Password string `valid:"required,minstringlength(6)"`
 	}
 
-	c.Bind(&userBody)
+	err := c.BindJSON(&userBody)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Empty body",
+		})
+		return
+	}
 
 	if _, err := valid.ValidateStruct(userBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
