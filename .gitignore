@@ -24,3 +24,6 @@ final-task-pbi
 .env
 *.db
 *debug*
+controllers/postsController.go
+
+models/postModel.go
