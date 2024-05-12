@@ -20,5 +20,9 @@ func main() {
 	}
 
 	gormDB := db.GetDB()
-	gormDB.AutoMigrate(&models.Photo{}, &models.User{})
+	migrateErr := gormDB.AutoMigrate(&models.User{}, &models.Photo{})
+	if migrateErr != nil {
+		log.Fatal(migrateErr)
+	}
+
 }

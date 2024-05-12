@@ -1,10 +1,10 @@
 package database
 
 import (
-    "os"
-
-    "github.com/glebarez/sqlite"
-    "gorm.io/gorm"
+	"fmt"
+	"os"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 type Database interface {
@@ -20,8 +20,12 @@ func (db *sqliteDB) GetDB() *gorm.DB {
 }
 
 func ConnectToDB() (Database, error) {
-    dbPath := os.Getenv("SQLITE_DB")
-    gormDB, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+    dbName := os.Getenv("DB_NAME")
+    dbHost := os.Getenv("DB_HOST")
+    dbUser := os.Getenv("DB_USER")
+    dbPass := os.Getenv("DB_PASS")
+    dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPass, dbHost, dbName)
+    gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
     if err != nil {
         return nil, err
     }
